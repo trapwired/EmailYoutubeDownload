@@ -132,4 +132,32 @@ class EmailHandler(object):
     def delete_successful(self, mail: YoutubeEmail):
         self.imap_connection.store(str(mail.msg_index), "+FLAGS", "\\Deleted")
 
+    def send_error(self, error):
+        msg = MIMEMultipart()
+        msg["Subject"] = 'Error occured'
+        msg["From"] = self.secrets['username_email']
+        msg["To"] = self.secrets['error_email']
+
+        html = "Error occured: " + str(error)
+
+        # make the text version of the HTML
+        text = bs(html, "html.parser").text
+        text_part = MIMEText(text, "plain")
+        # html_part = MIMEText(html, "html")
+        # attach the email body to the mail message
+        # attach the plain text version first
+        msg.attach(text_part)
+        # msg.attach(html_part)
+
+        # initialize the SMTP server
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        # connect to the SMTP server as TLS mode (secure) and send EHLO
+        server.starttls()
+        # login to the account using the credentials
+        server.login(self.secrets['username_email'], self.secrets['password_email'])
+        # send the email
+        server.sendmail(self.secrets['username_email'], self.secrets['error_email'], msg.as_string())
+        # terminate the SMTP session
+        server.quit()
+
 
