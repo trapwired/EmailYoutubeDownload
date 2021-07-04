@@ -10,7 +10,7 @@ from email.mime.text import MIMEText
 
 from bs4 import BeautifulSoup as bs
 
-from src.EMail import YoutubeEmail
+from EMail import YoutubeEmail
 
 
 def get_links(email_body):

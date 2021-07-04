@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, '../src')
 
 from EmailHandler import EmailHandler
-from src.DownloadHandler import DownloadHandler
+from DownloadHandler import DownloadHandler
 
 
 class MainHandler(object):
