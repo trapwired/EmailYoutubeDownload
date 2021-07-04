@@ -2,6 +2,8 @@ import json
 import os
 import shutil
 import time
+import sys
+sys.path.insert(0, '../src')
 
 from EmailHandler import EmailHandler
 from src.DownloadHandler import DownloadHandler
