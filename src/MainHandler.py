@@ -15,22 +15,24 @@ class MainHandler(object):
         self.download_handler = download_handler_
 
     def start(self):
-        while True:
-            emails = self.email_handler.get_all_emails()
-            if len(emails) > 0:
-                print('you\'ve got mail')
-                # loop over all Emails, there may be plenty
-                for email in emails:
-                    folder_name = self.download_handler.download_videos(email.youtube_links)
-                    # send answer, attach all mails in folder folder_name
-                    self.email_handler.send_response(email, folder_name)
-                    # delete folder
-                    shutil.rmtree(folder_name)
-                    # delete email from Inbox / move to folder
-                    self.email_handler.delete_successful(email)
-                self.email_handler.imap_connection.expunge()
-            time.sleep(10)
-
+        try:
+            while True:
+                emails = self.email_handler.get_all_emails()
+                if len(emails) > 0:
+                    print('you\'ve got mail')
+                    # loop over all Emails, there may be plenty
+                    for email in emails:
+                        folder_name = self.download_handler.download_videos(email.youtube_links)
+                        # send answer, attach all mails in folder folder_name
+                        self.email_handler.send_response(email, folder_name)
+                        # delete folder
+                        shutil.rmtree(folder_name)
+                        # delete email from Inbox / move to folder
+                        self.email_handler.delete_successful(email)
+                    self.email_handler.imap_connection.expunge()
+                time.sleep(10)
+        except Exception as e:
+            self.email_handler.send_error(e)
 
 def get_secrets(path):
     with open(path) as f:
