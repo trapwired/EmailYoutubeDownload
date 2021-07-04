@@ -15,7 +15,6 @@ class MainHandler(object):
         self.download_handler = download_handler_
 
     def start(self):
-        # implement main loop
         while True:
             emails = self.email_handler.get_all_emails()
             if len(emails) > 0:
