@@ -20,7 +20,7 @@ Entry point is MainHandler.py - the script runs an while True loop:
 - wait for 10 seconds
 
 If there is any error, an email containing said error will be sent to 'error_email' specified in secrets.json
-### Global Variables
+### Global Variables (MainHandler.py)
 ```python
 EMAIL_MAX_SIZE = 25                         # maximum send size, in MegaBytes
 MAX_VIDEO_LENGTH = 10                       # maximum length of videos to download, in Minutes
