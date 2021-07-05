@@ -2,6 +2,7 @@ import email
 import imaplib
 import os
 import smtplib
+import re
 from email import encoders
 from email.header import decode_header
 from email.mime.base import MIMEBase
@@ -13,8 +14,17 @@ from bs4 import BeautifulSoup as bs
 from EMail import YoutubeEmail
 
 
-def get_links(email_body):
-    split = email_body.splitlines()
+def split_html(string, maxsplit=0):
+    delimiters = " ", "\"", "<", ">"
+    regexPattern = '|'.join(map(re.escape, delimiters))
+    return re.split(regexPattern, string, maxsplit)
+
+
+def get_links(email_body, isHTML=False):
+    if isHTML:
+        split = split_html(email_body)
+    else:
+        split = email_body.splitlines()
     res = []
     for line in split:
         if 'youtu' in line:
@@ -22,7 +32,8 @@ def get_links(email_body):
             for word in split:
                 if word.startswith('http'):
                     res.append(word)
-    return res
+    res_without_duplicates = list(dict.fromkeys(res))
+    return res_without_duplicates
 
 
 def get_filename(file):
@@ -75,10 +86,13 @@ class EmailHandler(object):
                     content_type = msg.get_content_type()
                     # get the email body
                     body = msg.get_payload(decode=True).decode()
-
                     if content_type == "text/plain":
                         links = get_links(str(body))
-                        result.append(YoutubeEmail(sender, subject, links, i))
+                    elif content_type == "text/html":
+                        links = get_links(str(body), True)
+                    else:
+                        raise Exception(f'unknown email body type: {content_type}')
+                    result.append(YoutubeEmail(sender, subject, links, i))
         return result
 
     def send_response(self, mail: YoutubeEmail, folder):
@@ -126,6 +140,7 @@ class EmailHandler(object):
         server.login(self.secrets['username_email'], self.secrets['password_email'])
         # send the email
         server.sendmail(self.secrets['username_email'], mail.from_email, msg.as_string())
+        print(f'sent email to {mail.from_email} with {len(onlyfiles)} attachements')
         # terminate the SMTP session
         server.quit()
 
