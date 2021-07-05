@@ -14,13 +14,17 @@ Entry point is MainHandler.py - the script runs an while True loop:
 - download mails from your Inbox
 - looks whether the senders are in the allowed_senders list
 - if so, checks the emails for youtube links (multiple allowed)
-- if there are any, download them all into a new temporary folder inside downloads/
+- if there are any, download them all into a new temporary folder inside downloads/ (if a video's length exceeds MAX_VIDEO_LENGTH, its skipped and the original sender will be notified)
 - reply to the original email with the same subject and the downloaded mp3's attached, send one email for each attachement
 - delete the original email from your Inbox
 - wait for 10 seconds
 
 If there is any error, an email containing said error will be sent to 'error_email' specified in secrets.json
-
+### Global Variables
+```python
+EMAIL_MAX_SIZE = 25                         # maximum send size, in MegaBytes
+MAX_VIDEO_LENGTH = 10                       # maximum length of videos to download, in Minutes
+```
 ## secrets.json
 ```python
 {
