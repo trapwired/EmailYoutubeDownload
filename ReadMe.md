@@ -15,7 +15,7 @@ Entry point is MainHandler.py - the script runs an while True loop:
 - looks whether the senders are in the allowed_senders list
 - if so, checks the emails for youtube links (multiple allowed)
 - if there are any, download them all into a new temporary folder inside downloads/
-- reply to the original email with the same subject and the downloaded mp3's attached
+- reply to the original email with the same subject and the downloaded mp3's attached, send one email for each attachement
 - delete the original email from your Inbox
 - wait for 10 seconds
 
@@ -35,6 +35,6 @@ If there is any error, an email containing said error will be sent to 'error_ema
 }
 ```
 # Limitations
-- there is no advanced error catching
-- there is no advanced logging
-- there is no check for send-limits: if the downloaded video is larger than the eMail-providers send-limit, an error will be thrown - same if several mp3 are downloaded and they sum up together to more than the send-limit
+- there is no advanced error catching (just one big try - except clause around the main loop)
+- there is no advanced logging (letting it run headless on a pi is not easy to debug)
+- send-limit: if the downloaded mp3 is larger than gmails send limit (25MB), it cant be sent back (but still sends a message to the original sender stating the reason)
