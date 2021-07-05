@@ -5,7 +5,7 @@ This simple script downloads and replies to an email containing youtube links.
 - Install the requirements via the provided requirements.txt file (easiest to do via venv)
 - Install youtube-dl for python and ffmpeg files as provided via [this Link](https://github.com/ytdl-org/youtube-dl)
 - create a secrets.json file and place in it the root directory
-- get a gmail api-key from google
+- if you do not use 2FA to login into your google account, your normal credentials can be used (Username and password). If 2FA is used, you need to generate an app-password ([Creating App Passwords](https://support.google.com/mail/answer/185833?hl=en))
 
 ## Usage
 Entry point is MainHandler.py - the script runs an while True loop:
