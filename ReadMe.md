@@ -23,11 +23,12 @@ If there is any error, an email containing said error will be sent to 'error_ema
 ```python
 {
   "username_email" : "some_email@gmail.com",
-  "password_email" : "API_KEY",
+  "password_email" : "app_pasword OR normal_password",
   "error_email" : "admin_email@gmail.com",
   "allowed_senders" : [
     "some_email@hotmail.com",
-    "another_email@aol.com"
+    "another_email@outlook.com",
+    "a_third_email@icloud.com"
   ]
 }
 ```
