@@ -138,9 +138,12 @@ class EmailHandler(object):
             size = round(os.path.getsize(filename) / math.pow(2, 20), 2)
             # print('Size of file is', size, 'MB')
             if size > self.max_size - 1:
-                html = "Folgendes Video konnte nicht heruntergeladen werden:\n\n\t" + file + "\n\nGrund: Zu gross, " \
-                                                                                             "um via eMail zu " \
-                                                                                             "senden... "
+                html = "Folgendes Video konnte nicht gesendet werden:\n\n\t" + file + "\n\nGrund: Zu gross!"
+                text = bs(html, "html.parser").text
+                text_part = MIMEText(text, "plain")
+                msg.attach(text_part)
+            elif filename.endswith('.toolarge'):
+                html = "Folgendes Video konnte nicht heruntergeladen werden:\n\n\t" + file[:-9] + "\n\nGrund: Zu lange!"
                 text = bs(html, "html.parser").text
                 text_part = MIMEText(text, "plain")
                 msg.attach(text_part)
