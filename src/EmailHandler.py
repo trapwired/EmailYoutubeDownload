@@ -1,8 +1,9 @@
 import email
 import imaplib
+import math
 import os
-import smtplib
 import re
+import smtplib
 from email import encoders
 from email.header import decode_header
 from email.mime.base import MIMEBase
@@ -32,8 +33,7 @@ def get_links(email_body, isHTML=False):
             for word in split:
                 if word.startswith('http'):
                     res.append(word)
-    res_without_duplicates = list(dict.fromkeys(res))
-    return res_without_duplicates
+    return res
 
 
 def get_filename(file):
@@ -45,8 +45,9 @@ def get_filename(file):
 
 
 class EmailHandler(object):
-    def __init__(self, secrets_: dict):
+    def __init__(self, secrets_: dict, max_size_: int):
         self.secrets = secrets_
+        self.max_size = max_size_
         self.imap_connection = self.init_imap_connection()
 
     def init_imap_connection(self):
@@ -84,53 +85,31 @@ class EmailHandler(object):
 
                     # extract content type of email
                     content_type = msg.get_content_type()
-                    # get the email body
-                    body = msg.get_payload(decode=True).decode()
-                    if content_type == "text/plain":
-                        links = get_links(str(body))
-                    elif content_type == "text/html":
-                        links = get_links(str(body), True)
+                    if msg.is_multipart():
+                        body = ' '
+                        links = []
+                        for part in msg.get_payload():
+                            if part.get_content_type() == "text/plain":
+                                body += part.get_payload(decode=True).decode()
+                                links = links + get_links(str(body))
+                            if part.get_content_type() == "text/html":
+                                body += part.get_payload(decode=True).decode()
+                                links = links + get_links(str(body), True)
                     else:
-                        raise Exception(f'unknown email body type: {content_type}')
-                    result.append(YoutubeEmail(sender, subject, links, i))
+                        body = msg.get_payload(decode=True).decode()
+                        if content_type == "text/plain":
+                            links = get_links(str(body))
+                        elif content_type == "text/html":
+                            links = get_links(str(body), True)
+                        else:
+                            raise Exception(f'unknown email body type: {content_type}')
+                    # remove duplicates from links
+                    links_wo_duplicates = list(dict.fromkeys(links))
+                    result.append(YoutubeEmail(sender, subject, links_wo_duplicates, i))
         return result
 
     def send_response(self, mail: YoutubeEmail, folder):
         onlyfiles = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
-
-        msg = MIMEMultipart()
-        msg["Subject"] = 'Re: ' + mail.subject
-        msg["From"] = self.secrets['username_email']
-        msg["To"] = mail.from_email
-
-        html = "Folgende Videos heruntergeladen:\n" + '\n- '.join(onlyfiles)
-
-        # make the text version of the HTML
-        text = bs(html, "html.parser").text
-        text_part = MIMEText(text, "plain")
-        # html_part = MIMEText(html, "html")
-        # attach the email body to the mail message
-        # attach the plain text version first
-        msg.attach(text_part)
-        # msg.attach(html_part)
-
-        for file in onlyfiles:
-            print(file)
-            filename = os.path.join(folder, file)
-            # Open file in binary mode
-            with open(filename, "rb") as attachment:
-                # Add file as application/octet-stream
-                # Email client can usually download this automatically as attachment
-                part = MIMEBase("application", "octet-stream")
-                part.set_payload(attachment.read())
-            # Encode file in ASCII characters to send by email
-            encoders.encode_base64(part)
-            # Add header as key/value pair to attachment part
-            part.add_header(
-                "Content-Disposition",
-                f"attachment; filename={get_filename(file)}",
-            )
-            msg.attach(part)
 
         # initialize the SMTP server
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -138,9 +117,54 @@ class EmailHandler(object):
         server.starttls()
         # login to the account using the credentials
         server.login(self.secrets['username_email'], self.secrets['password_email'])
-        # send the email
-        server.sendmail(self.secrets['username_email'], mail.from_email, msg.as_string())
-        print(f'sent email to {mail.from_email} with {len(onlyfiles)} attachements')
+
+        index = 1
+        for file in onlyfiles:
+            count_part = ' (' + str(index) + '/' + str(len(onlyfiles)) + ')'
+            index += 1
+            msg = MIMEMultipart()
+            msg["Subject"] = 'Re: ' + mail.subject + count_part
+            msg["From"] = self.secrets['username_email']
+            msg["To"] = mail.from_email
+
+            html = "Folgendes Video heruntergeladen:\n\n\t" + file
+
+            # make the text version of the HTML
+            text = bs(html, "html.parser").text
+            text_part = MIMEText(text, "plain")
+
+            filename = os.path.join(folder, file)
+            # Open file in binary mode
+            size = round(os.path.getsize(filename) / math.pow(2, 20), 2)
+            # print('Size of file is', size, 'MB')
+            if size > self.max_size - 1:
+                html = "Folgendes Video konnte nicht gesendet werden:\n\n\t" + file + "\n\nGrund: Zu gross!"
+                text = bs(html, "html.parser").text
+                text_part = MIMEText(text, "plain")
+                msg.attach(text_part)
+            elif filename.endswith('.toolarge'):
+                html = "Folgendes Video konnte nicht heruntergeladen werden:\n\n\t" + file[:-9] + "\n\nGrund: Zu lange!"
+                text = bs(html, "html.parser").text
+                text_part = MIMEText(text, "plain")
+                msg.attach(text_part)
+            else:
+                msg.attach(text_part)
+                with open(filename, "rb") as attachment:
+                    # Add file as application/octet-stream
+                    # Email client can usually download this automatically as attachment
+                    part = MIMEBase("application", "octet-stream")
+                    part.set_payload(attachment.read())
+                # Encode file in ASCII characters to send by email
+                encoders.encode_base64(part)
+                # Add header as key/value pair to attachment part
+                part.add_header(
+                    "Content-Disposition",
+                    f"attachment; filename={get_filename(file)}",
+                )
+                msg.attach(part)
+            # send the email
+            server.sendmail(self.secrets['username_email'], mail.from_email, msg.as_string())
+            print(f'sent email to {mail.from_email} {count_part}')
         # terminate the SMTP session
         server.quit()
 
@@ -174,5 +198,3 @@ class EmailHandler(object):
         server.sendmail(self.secrets['username_email'], self.secrets['error_email'], msg.as_string())
         # terminate the SMTP session
         server.quit()
-
-
