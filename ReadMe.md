@@ -17,11 +17,14 @@ Entry point is MainHandler.py - the script runs an while True loop:
 - delete the original email from your Inbox
 - wait for 10 seconds
 
+If there is any error, an email containing said error will be sent to 'error_email' specified in secrets.json
+
 ## secrets.json
 ```python
 {
   "username_email" : "some_email@gmail.com",
   "password_email" : "API_KEY",
+  "error_email" : "admin_email@gmail.com",
   "allowed_senders" : [
     "some_email@hotmail.com",
     "another_email@aol.com"
