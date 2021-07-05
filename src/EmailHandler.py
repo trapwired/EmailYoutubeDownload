@@ -2,8 +2,8 @@ import email
 import imaplib
 import math
 import os
-import smtplib
 import re
+import smtplib
 from email import encoders
 from email.header import decode_header
 from email.mime.base import MIMEBase
@@ -198,5 +198,3 @@ class EmailHandler(object):
         server.sendmail(self.secrets['username_email'], self.secrets['error_email'], msg.as_string())
         # terminate the SMTP session
         server.quit()
-
-

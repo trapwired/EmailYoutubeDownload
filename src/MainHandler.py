@@ -1,15 +1,18 @@
 import json
 import os
 import shutil
-import time
 import sys
+import time
+
 sys.path.insert(0, '../src')
 
 from EmailHandler import EmailHandler
 from src.DownloadHandler import DownloadHandler
 
-EMAIL_MAX_SIZE = 25                         # maximum send size in MegaBytes
-MAX_VIDEO_LENGTH = 10                       # maximum length of videos to download in minutes
+EMAIL_MAX_SIZE = 25  # maximum send size in MegaBytes
+MAX_VIDEO_LENGTH = 10  # maximum length of videos to download in minutes
+
+
 class MainHandler(object):
 
     def __init__(self, secrets_: dict, email_handler_: EmailHandler, download_handler_: DownloadHandler):
@@ -37,6 +40,7 @@ class MainHandler(object):
         except Exception as e:
             self.email_handler.send_error(e)
             # for HTTPError 403: try |youtube-dl --rm-cache-dir|
+
 
 def get_secrets(path):
     with open(path) as f:
