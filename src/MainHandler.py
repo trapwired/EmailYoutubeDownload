@@ -40,6 +40,7 @@ class MainHandler(object):
         except Exception as e:
             self.email_handler.send_error(e)
             # for HTTPError 403: try |youtube-dl --rm-cache-dir|
+            self.start()
 
 
 def get_secrets(path):
