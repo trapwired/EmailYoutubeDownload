@@ -7,7 +7,7 @@ class YoutubeEmail(object):
         # print(self)
 
     def __str__(self):
-        res = "Created New YoutubeEmail: "
+        res = "Email: \n "
         res += f"From:          {self.from_email}\n"
         res += f"Subject:       {self.subject}\n"
         res += f"Msg-Index:     {self.msg_index}\n"

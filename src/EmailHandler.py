@@ -48,6 +48,7 @@ class EmailHandler(object):
     def __init__(self, secrets_: dict, max_size_: int):
         self.secrets = secrets_
         self.max_size = max_size_
+        self.imap_connection = self.init_imap_connection()
 
     def init_imap_connection(self):
         # create an IMAP4 class with SSL
@@ -57,13 +58,12 @@ class EmailHandler(object):
         return imap
 
     def get_all_emails(self):
-        imap_connection = self.init_imap_connection()
-        status, messages = imap_connection.select("INBOX")
+        status, messages = self.imap_connection.select("INBOX")
         messages = int(messages[0])
         result = []
         for i in range(1, messages + 1):
             # fetch the email message by ID
-            res, msg = imap_connection.fetch(str(i), "(RFC822)")
+            res, msg = self.imap_connection.fetch(str(i), "(RFC822)")
             for response in msg:
                 if isinstance(response, tuple):
                     # parse a bytes email into a message object
@@ -106,7 +106,7 @@ class EmailHandler(object):
                     # remove duplicates from links
                     links_wo_duplicates = list(dict.fromkeys(links))
                     result.append(YoutubeEmail(sender, subject, links_wo_duplicates, i))
-        imap_connection.close()
+        # imap_connection.close()
         return result
 
     def send_response(self, mail: YoutubeEmail, folder):
@@ -172,13 +172,17 @@ class EmailHandler(object):
     def delete_successful(self, mail: YoutubeEmail):
         self.imap_connection.store(str(mail.msg_index), "+FLAGS", "\\Deleted")
 
-    def send_error(self, error):
+    def send_error(self, message, error, mail=None, directory=None):
         msg = MIMEMultipart()
         msg["Subject"] = 'Error occured'
         msg["From"] = self.secrets['username_email']
         msg["To"] = self.secrets['error_email']
 
-        html = "Error occured: " + str(error)
+        html = message + '\n' + str(error)
+        if mail:
+            html += mail
+        if directory:
+            html += "Directory: " + directory + '\n'
 
         # make the text version of the HTML
         text = bs(html, "html.parser").text
